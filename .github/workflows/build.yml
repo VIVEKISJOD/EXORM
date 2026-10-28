@@ -46,8 +46,9 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_NUMBER: ${{ github.run_number }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
-          gh release create "v${{ github.run_number }}" EXORM.apk \
-            --title "EXORM 1.0.${{ github.run_number }}" \
-            --notes "Automatic build from commit ${{ githu
-            b.sha }}"
+          gh release create "v${RUN_NUMBER}" EXORM.apk \
+            --title "EXORM 1.0.${RUN_NUMBER}" \
+            --notes "Automatic build from commit ${COMMIT_SHA}"
