@@ -1,0 +1,53 @@
+name: Build and release EXORM
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # If you uploaded the project as a .zip, unpack it here (nothing is committed back).
+      - name: Unpack project zip if present
+        run: |
+          if ls ./*.zip >/dev/null 2>&1; then
+            for z in ./*.zip; do unzip -o "$z" -x ".github/*"; done
+          fi
+          ls
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+
+      - name: Build release APK
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Name the APK
+        run: cp app/build/outputs/apk/release/app-release.apk EXORM.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXORM-apk
+          path: EXORM.apk
+
+      # Every push publishes a new release. Installed apps see it and offer the update.
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ github.run_number }}" EXORM.apk \
+            --title "EXORM 1.0.${{ github.run_number }}" \
+            --notes "Automatic build from commit ${{ githu
+            b.sha }}"
